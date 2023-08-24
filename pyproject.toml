@@ -1,0 +1,73 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "synthetic-knn"
+dynamic = ["version"]
+description = "Two-stage kNN imputation using synthetic data and treelists"
+readme = "README.md"
+license = ""
+requires-python = ">=3.8"
+authors = [{ name = "Matt Gregory", email = "matt.gregory@oregonstate.edu" }]
+dependencies = [
+    "numpy",
+    "pandas",
+    "pydantic",
+    "scikit-learn-knn-regression @ git+ssh://git@github.com/lemma-osu/scikit-learn-knn-regression@estimator_checks",
+]
+
+[project.urls]
+Homepage = "https://github.com/lemma-osu/synthetic-knn"
+Source = "https://github.com/lemma-osu/synthetic-knn"
+
+[tool.hatch.version]
+path = "src/synthetic_knn/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/synthetic_knn"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.envs.default]
+dependencies = ["pre-commit"]
+
+[tool.hatch.envs.test]
+dependencies = ["pytest", "pytest-cov"]
+
+[tool.hatch.envs.test.scripts]
+all = "pytest {args}"
+coverage = "pytest --cov=src/synthetic_knn {args}"
+
+[tool.pytest.ini_options]
+pythonpath = "src/"
+markers = [
+    "uncollect_if(*, func): function to uncollect tests from parametrization",
+]
+
+[tool.ruff]
+target-version = "py38"
+select = [
+    "E",
+    "I",
+    "F",
+    "B",
+    "FA",
+    "UP",
+    "ISC",
+    "PT",
+    "NPY",
+    "Q",
+    "RET",
+    "SIM",
+    "PERF",
+]
+fix = true
+show-fixes = true
+
+[tool.ruff.isort]
+known-first-party = ["synthetic_knn"]
