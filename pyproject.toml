@@ -14,7 +14,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pydantic",
-    "scikit-learn-knn-regression @ git+ssh://git@github.com/lemma-osu/scikit-learn-knn-regression@estimator_checks",
+    "scikit-learn-knn-regression @ git+ssh://git@github.com/lemma-osu/scikit-learn-knn-regression@fb_add_estimators",
 ]
 
 [project.urls]

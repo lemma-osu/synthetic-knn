@@ -1,6 +1,7 @@
 # synthetic-knn
 
-Using two-stage kNN to address predictive vegetation mapping.
+Two-stage kNN imputation using synthetic data and treelists for predictive
+vegetation mapping.
 
 This package is in active development.
 
