@@ -37,7 +37,7 @@ allow-direct-references = true
 dependencies = ["pre-commit"]
 
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov"]
+dependencies = ["pytest", "pytest-cov", "pytest-regressions"]
 
 [tool.hatch.envs.test.scripts]
 all = "pytest {args}"
