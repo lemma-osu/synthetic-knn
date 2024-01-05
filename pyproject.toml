@@ -8,13 +8,14 @@ dynamic = ["version"]
 description = "Two-stage kNN imputation using synthetic data and treelists"
 readme = "README.md"
 license = ""
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [{ name = "Matt Gregory", email = "matt.gregory@oregonstate.edu" }]
 dependencies = [
+    "ipykernel",
     "numpy",
     "pandas",
     "pydantic",
-    "scikit-learn-knn-regression @ git+ssh://git@github.com/lemma-osu/scikit-learn-knn-regression@estimator_checks",
+    "scikit-learn-knn-regression @ git+https://github.com/lemma-osu/scikit-learn-knn-regression",
 ]
 
 [project.urls]
@@ -37,20 +38,27 @@ allow-direct-references = true
 dependencies = ["pre-commit"]
 
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-cov"]
+dependencies = ["pytest", "pytest-cov", "pytest-regressions"]
 
 [tool.hatch.envs.test.scripts]
 all = "pytest {args}"
 coverage = "pytest --cov=src/synthetic_knn {args}"
 
+[tool.hatch.envs.test_matrix]
+dependencies = ["pytest", "pytest-cov", "pytest-regressions"]
+
+[[tool.hatch.envs.test_matrix.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.test_matrix.scripts]
+all = "pytest {args}"
+coverage = "pytest --cov=src/synthetic_knn {args}"
+
 [tool.pytest.ini_options]
 pythonpath = "src/"
-markers = [
-    "uncollect_if(*, func): function to uncollect tests from parametrization",
-]
+testpaths = ["tests/"]
 
 [tool.ruff]
-target-version = "py38"
 select = [
     "E",
     "I",
