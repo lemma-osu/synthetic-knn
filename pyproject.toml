@@ -11,10 +11,11 @@ license = ""
 requires-python = ">=3.8"
 authors = [{ name = "Matt Gregory", email = "matt.gregory@oregonstate.edu" }]
 dependencies = [
+    "ipykernel",
     "numpy",
     "pandas",
     "pydantic",
-    "scikit-learn-knn-regression @ git+https://github.com/lemma-osu/scikit-learn-knn-regression@fb_add_estimators",
+    "scikit-learn-knn-regression @ git+https://github.com/lemma-osu/scikit-learn-knn-regression",
 ]
 
 [project.urls]
@@ -45,9 +46,7 @@ coverage = "pytest --cov=src/synthetic_knn {args}"
 
 [tool.pytest.ini_options]
 pythonpath = "src/"
-markers = [
-    "uncollect_if(*, func): function to uncollect tests from parametrization",
-]
+testpaths = ["tests/"]
 
 [tool.ruff]
 target-version = "py38"
