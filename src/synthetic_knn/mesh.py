@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import IntEnum
-from typing import Sequence
+from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -30,7 +31,7 @@ def equal_interval_bins(arr: NDArray, n_bins: int = 10) -> list[NDArray]:
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class MeshCoords:
-    reference_coordinates: Sequence | NDArray
+    reference_coordinates: Union[Sequence, NDArray]  # noqa: UP007
     n_bins: int = 5
     classifier: ClassifierEnum = ClassifierEnum.QUANTILE
 

@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Two-stage kNN imputation using synthetic data and treelists"
 readme = "README.md"
 license = ""
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [{ name = "Matt Gregory", email = "matt.gregory@oregonstate.edu" }]
 dependencies = [
     "ipykernel",
@@ -44,12 +44,21 @@ dependencies = ["pytest", "pytest-cov", "pytest-regressions"]
 all = "pytest {args}"
 coverage = "pytest --cov=src/synthetic_knn {args}"
 
+[tool.hatch.envs.test_matrix]
+dependencies = ["pytest", "pytest-cov", "pytest-regressions"]
+
+[[tool.hatch.envs.test_matrix.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.test_matrix.scripts]
+all = "pytest {args}"
+coverage = "pytest --cov=src/synthetic_knn {args}"
+
 [tool.pytest.ini_options]
 pythonpath = "src/"
 testpaths = ["tests/"]
 
 [tool.ruff]
-target-version = "py38"
 select = [
     "E",
     "I",
