@@ -1,52 +1,63 @@
 from __future__ import annotations
 
-import numpy as np
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
+import pandas as pd
+from numpy.typing import NDArray
 from sklearn.neighbors import NearestNeighbors
 
-from .mesh import ClassifierEnum, MeshCoords
+from synthetic_knn.point_networks import PointNetwork
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class SyntheticPlots:
-    coordinates: np.ndarray
-    n_components: int | None = None
-    n_bins: int = 10
-    classifier: ClassifierEnum = ClassifierEnum.QUANTILE
-    k: int = 7
+    def __init__(
+        self, reference_coordinates: NDArray, network: PointNetwork, k: int = 10
+    ):
+        self.reference_coordinates = reference_coordinates
+        self.network = network.fit(reference_coordinates)
+        self.k = k
+        self.neighbors_ = self._generate_neighbors()
 
-    def __post_init__(self):
-        if self.n_components is None:
-            n_coord_components = self.coordinates.shape[1]
-            self.n_components = (
-                n_coord_components
-                if self.n_components is None
-                else min(n_coord_components, self.n_components)
-            )
+    def synthetic_coordinates(self) -> NDArray:
+        return self.network.network_coordinates()
 
-    def _generate(self) -> tuple[np.ndarray, np.ndarray]:
-        """Find the nearest reference neighbors of the synthetic mesh"""
+    def _generate_neighbors(self) -> tuple[NDArray, NDArray]:
+        """Find the nearest reference neighbors of the synthetic mesh."""
         nn_finder = NearestNeighbors(n_neighbors=self.k)
         nn_finder.fit(self.reference_coordinates)
-        return nn_finder.kneighbors(self.synthetic_coordinates, n_neighbors=self.k)
+        return nn_finder.kneighbors(self.synthetic_coordinates(), n_neighbors=self.k)
 
-    @property
-    def reference_coordinates(self) -> np.ndarray:
-        return self.coordinates[:, : self.n_components]
+    def distances(self) -> NDArray:
+        return self.neighbors_[0]
 
-    @property
-    def synthetic_coordinates(self) -> np.ndarray:
-        return MeshCoords(
-            arr=self.reference_coordinates,
-            n_bins=self.n_bins,
-            classifier=self.classifier,
-        ).to_coords()
-
-    @property
-    def distances(self) -> np.ndarray:
-        return self._generate()[0]
-
-    def neighbors(self, *, id_arr: np.ndarray = None) -> np.ndarray:
-        nn_idx = self._generate()[1]
+    def neighbors(self, *, id_arr: NDArray = None) -> NDArray:
+        nn_idx = self.neighbors_[1]
         return id_arr[nn_idx] if id_arr is not None else nn_idx
+
+    def write_synthetic_coordinates(
+        self, *, coordinate_fn: str = "synthetic_coordinates.csv"
+    ) -> None:
+        c = self.synthetic_coordinates()
+        cols = [f"CCA{i+1}" for i in range(c.shape[1])]
+        idx = [i + 1 for i in range(c.shape[0])]
+        df = pd.DataFrame(c, columns=cols, index=idx)
+        df.index.name = "SYNTHETIC_PLOT_ID"
+        df.to_csv(coordinate_fn)
+
+    def write_neighbors(
+        self,
+        *,
+        neighbors_fn: str = "neighbors.csv",
+        distances_fn: str = "distances.csv",
+    ) -> None:
+        id_arr = None
+        distances = self.distances()
+        neighbors = self.neighbors(id_arr=id_arr)
+        cols = [f"NN{i+1}" for i in range(neighbors.shape[1])]
+        idx = [i + 1 for i in range(neighbors.shape[0])]
+
+        def _write_csv(arr: NDArray, fn: str, float_format: str | None = None) -> None:
+            df = pd.DataFrame(arr, columns=cols, index=idx)
+            df.index.name = "SYNTHETIC_PLOT_ID"
+            df.to_csv(fn, float_format=float_format)
+
+        _write_csv(neighbors, neighbors_fn)
+        _write_csv(distances, distances_fn)
