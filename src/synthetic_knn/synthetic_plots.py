@@ -33,22 +33,22 @@ class SyntheticPlots:
         return id_arr[nn_idx] if id_arr is not None else nn_idx
 
     def write_synthetic_coordinates(
-        self, *, coordinate_fn: str = "synthetic_coordinates.csv"
+        self, *, coordinates_fn: str = "synthetic_coordinates.csv"
     ) -> None:
         c = self.synthetic_coordinates()
         cols = [f"CCA{i+1}" for i in range(c.shape[1])]
         idx = [i + 1 for i in range(c.shape[0])]
         df = pd.DataFrame(c, columns=cols, index=idx)
         df.index.name = "SYNTHETIC_PLOT_ID"
-        df.to_csv(coordinate_fn)
+        df.to_csv(coordinates_fn, float_format="%.6f")
 
     def write_neighbors(
         self,
         *,
         neighbors_fn: str = "neighbors.csv",
         distances_fn: str = "distances.csv",
+        id_arr: NDArray = None,
     ) -> None:
-        id_arr = None
         distances = self.distances()
         neighbors = self.neighbors(id_arr=id_arr)
         cols = [f"NN{i+1}" for i in range(neighbors.shape[1])]
@@ -60,4 +60,4 @@ class SyntheticPlots:
             df.to_csv(fn, float_format=float_format)
 
         _write_csv(neighbors, neighbors_fn)
-        _write_csv(distances, distances_fn)
+        _write_csv(distances, distances_fn, float_format="%.6f")
