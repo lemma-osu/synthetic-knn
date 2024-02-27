@@ -44,14 +44,10 @@ all = "pytest {args}"
 coverage = "pytest --cov=src/synthetic_knn {args}"
 
 [tool.hatch.envs.test_matrix]
-dependencies = ["pytest", "pytest-cov", "pytest-regressions"]
+template = "test"
 
 [[tool.hatch.envs.test_matrix.matrix]]
 python = ["3.9", "3.10", "3.11", "3.12"]
-
-[tool.hatch.envs.test_matrix.scripts]
-all = "pytest {args}"
-coverage = "pytest --cov=src/synthetic_knn {args}"
 
 [tool.pytest.ini_options]
 pythonpath = "src/"
