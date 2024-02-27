@@ -2,6 +2,7 @@
 Module to generate point networks for synthetic kNN data.  Point networks are
 used to generate synthetic data for kNN imputation.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -44,29 +45,31 @@ class FuzzedNetwork(PointNetwork):
         self.minimum_distance = minimum_distance
         self.maximum_distance = maximum_distance
 
-    def _fuzz_point(self, point: NDArray) -> tuple[float, ...]:
-        """Generate a fuzzed point in n-D space by adding a random offset
-        to the original point"""
+    def _fuzz_points(self) -> NDArray:
+        """Generate fuzzed points in n-D space by adding a random offset
+        to the original points"""
+        coords = self.reference_coordinates
+
         # Generate a random direction vector
         rng = np.random.default_rng()
-        direction = rng.standard_normal(len(point))
+        direction = rng.standard_normal(coords.shape)
 
         # Normalize the direction vector
-        direction /= np.linalg.norm(direction)
+        direction /= np.linalg.norm(direction, axis=1, keepdims=True)
 
         # Scale the direction vector by a random distance between
         # min_distance and max_distance
-        distance = rng.uniform(self.minimum_distance, self.maximum_distance)
+        distance = rng.uniform(
+            self.minimum_distance, self.maximum_distance, (len(coords), 1)
+        )
         offset = direction * distance
 
-        # Add the offset to the original point
-        return tuple(coord + offset_coord for coord, offset_coord in zip(point, offset))
+        # Add the offset to the original points
+        return coords + offset
 
     def network_coordinates(self) -> NDArray:
         """Generate a network of fuzzed points in n-D space"""
-        return np.array(
-            [self._fuzz_point(point) for point in self.reference_coordinates]
-        )
+        return self._fuzz_points()
 
 
 class Mesh(PointNetwork):
