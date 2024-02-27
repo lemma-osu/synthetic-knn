@@ -13,21 +13,21 @@ from numpy.typing import NDArray
 
 
 class PointNetwork(ABC):
-    """Abstract base class for point networks"""
+    """Abstract base class for point networks."""
 
     def fit(self, reference_coordinates: Sequence | NDArray):
-        """Set the reference coordinates for the network"""
+        """Set the reference coordinates for the network."""
         self.reference_coordinates = np.array(reference_coordinates)
         return self
 
     @abstractmethod
     def network_coordinates(self) -> NDArray:
-        """Return the point network coordinates as a n-D array"""
+        """Return the point network coordinates as a n-D array."""
         ...
 
 
 class ReferenceNetwork(PointNetwork):
-    """Point network that uses the reference coordinates as the network coordinates"""
+    """Point network that uses the reference coordinates as the network coordinates."""
 
     def network_coordinates(self) -> NDArray:
         return self.reference_coordinates
@@ -35,7 +35,7 @@ class ReferenceNetwork(PointNetwork):
 
 class FuzzedNetwork(PointNetwork):
     """Point network that 'fuzzes' the reference coordinates by a random distance
-    between the minimum_distance and the maximum_distance"""
+    between the minimum_distance and the maximum_distance."""
 
     def __init__(
         self,
@@ -47,7 +47,7 @@ class FuzzedNetwork(PointNetwork):
 
     def _fuzz_points(self) -> NDArray:
         """Generate fuzzed points in n-D space by adding a random offset
-        to the original points"""
+        to the original points."""
         coords = self.reference_coordinates
 
         # Generate a random direction vector
@@ -68,46 +68,46 @@ class FuzzedNetwork(PointNetwork):
         return coords + offset
 
     def network_coordinates(self) -> NDArray:
-        """Generate a network of fuzzed points in n-D space"""
+        """Generate a network of fuzzed points in n-D space."""
         return self._fuzz_points()
 
 
 class Mesh(PointNetwork):
-    """Base class for mesh point networks"""
+    """Base class for mesh point networks."""
 
     def __init__(self, n_bins: int = 5):
         self.n_bins = n_bins
 
-    def bin_midpoints(self, bins: list[NDArray]) -> NDArray:
+    @abstractmethod
+    def bin_edges(self):
+        """Return the edges of the bins."""
+        ...
+
+    @staticmethod
+    def bin_midpoints(bins: NDArray) -> NDArray:
         """Find midpoints of bins in each dimension to serve as mesh points."""
-        midpoint_coordinates = np.array([(b[:-1] + b[1:]) / 2.0 for b in bins])
-        return np.vstack(
+        midpoint_coordinates = (bins[:, :-1] + bins[:, 1:]) / 2.0
+        return np.column_stack(
             list(map(np.ravel, np.meshgrid(*midpoint_coordinates, indexing="xy")))
-        ).T
+        )
+
+    def network_coordinates(self) -> NDArray:
+        bins = self.bin_edges()
+        return self.bin_midpoints(bins)
 
 
 class QuantileMesh(Mesh):
     """Mesh point network with quantile bin spacing in each dimension."""
 
-    def network_coordinates(self) -> NDArray:
+    def bin_edges(self) -> NDArray:
         q = np.linspace(0.0, 1.0, self.n_bins + 1)
-        bins = [
-            np.quantile(self.reference_coordinates[:, i], q)
-            for i in range(self.reference_coordinates.shape[1])
-        ]
-        return self.bin_midpoints(bins)
+        return np.quantile(self.reference_coordinates, q, axis=0).T
 
 
 class EqualIntervalMesh(Mesh):
     """Mesh point network with equal-interval bin spacing in each dimension."""
 
-    def network_coordinates(self) -> NDArray:
-        bins = [
-            np.linspace(
-                min(self.reference_coordinates[:, i]),
-                max(self.reference_coordinates[:, i]),
-                self.n_bins + 1,
-            )
-            for i in range(self.reference_coordinates.shape[1])
-        ]
-        return self.bin_midpoints(bins)
+    def bin_edges(self) -> NDArray:
+        min_vals = np.min(self.reference_coordinates, axis=0)
+        max_vals = np.max(self.reference_coordinates, axis=0)
+        return np.linspace(min_vals, max_vals, num=self.n_bins + 1).T
