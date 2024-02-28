@@ -79,12 +79,12 @@ class Mesh(PointNetwork):
         self.n_bins = n_bins
 
     @abstractmethod
-    def bin_edges(self):
+    def generate_bin_edges(self):
         """Return the edges of the bins."""
         ...
 
     @staticmethod
-    def bin_midpoints(bins: NDArray) -> NDArray:
+    def generate_bin_midpoints_mesh(bins: NDArray) -> NDArray:
         """Find midpoints of bins in each dimension to serve as mesh points."""
         midpoint_coordinates = (bins[:, :-1] + bins[:, 1:]) / 2.0
         return np.column_stack(
@@ -92,14 +92,14 @@ class Mesh(PointNetwork):
         )
 
     def network_coordinates(self) -> NDArray:
-        bins = self.bin_edges()
-        return self.bin_midpoints(bins)
+        bin_edges = self.generate_bin_edges()
+        return self.generate_bin_midpoints_mesh(bin_edges)
 
 
 class QuantileMesh(Mesh):
     """Mesh point network with quantile bin spacing in each dimension."""
 
-    def bin_edges(self) -> NDArray:
+    def generate_bin_edges(self) -> NDArray:
         q = np.linspace(0.0, 1.0, self.n_bins + 1)
         return np.quantile(self.reference_coordinates, q, axis=0).T
 
@@ -107,7 +107,7 @@ class QuantileMesh(Mesh):
 class EqualIntervalMesh(Mesh):
     """Mesh point network with equal-interval bin spacing in each dimension."""
 
-    def bin_edges(self) -> NDArray:
+    def generate_bin_edges(self) -> NDArray:
         min_vals = np.min(self.reference_coordinates, axis=0)
         max_vals = np.max(self.reference_coordinates, axis=0)
         return np.linspace(min_vals, max_vals, num=self.n_bins + 1).T
