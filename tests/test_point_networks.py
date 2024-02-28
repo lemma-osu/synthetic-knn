@@ -13,8 +13,10 @@ def test_reference_network():
     """Test that the reference network returns the reference coordinates."""
     rng = np.random.default_rng(42)
     reference_coordinates = rng.normal(size=(100, 3))
-    network = ReferenceNetwork().fit(reference_coordinates)
-    assert np.array_equal(network.network_coordinates(), reference_coordinates)
+    assert np.array_equal(
+        ReferenceNetwork().network_coordinates(reference_coordinates),
+        reference_coordinates,
+    )
 
 
 def test_fuzzed_network():
@@ -26,13 +28,19 @@ def test_fuzzed_network():
     reference_coordinates = rng.normal(size=(100, 3))
     network = FuzzedNetwork(
         minimum_distance=minimum_distance, maximum_distance=maximum_distance
-    ).fit(reference_coordinates)
+    )
     assert np.all(
-        np.linalg.norm(network.network_coordinates() - reference_coordinates, axis=1)
+        np.linalg.norm(
+            network.network_coordinates(reference_coordinates) - reference_coordinates,
+            axis=1,
+        )
         >= minimum_distance
     )
     assert np.all(
-        np.linalg.norm(network.network_coordinates() - reference_coordinates, axis=1)
+        np.linalg.norm(
+            network.network_coordinates(reference_coordinates) - reference_coordinates,
+            axis=1,
+        )
         <= maximum_distance
     )
 
@@ -49,8 +57,10 @@ def test_mesh_generation(ndarrays_regression, mesh_network, n_bins, n_dimensions
     held in regressions."""
     rng = np.random.default_rng(42)
     reference_coordinates = rng.normal(size=(100, n_dimensions))
-    mesh = mesh_network(n_bins=n_bins).fit(reference_coordinates)
-    ndarrays_regression.check(dict(network_coordinates=mesh.network_coordinates()))
+    mesh = mesh_network(n_bins=n_bins)
+    ndarrays_regression.check(
+        dict(network_coordinates=mesh.network_coordinates(reference_coordinates))
+    )
 
 
 @pytest.mark.parametrize(
@@ -66,4 +76,4 @@ def test_mesh_generation(ndarrays_regression, mesh_network, n_bins, n_dimensions
 def test_mesh_typing(reference_coordinates_type, network):
     """Test that the mesh network accepts different types of reference coordinates."""
     reference_coordinates = reference_coordinates_type(((1, 2), (3, 4)))
-    network().fit(reference_coordinates).network_coordinates()
+    network().network_coordinates(reference_coordinates)

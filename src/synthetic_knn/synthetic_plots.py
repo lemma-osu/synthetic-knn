@@ -12,12 +12,12 @@ class SyntheticPlots:
         self, reference_coordinates: NDArray, network: PointNetwork, k: int = 10
     ):
         self.reference_coordinates = reference_coordinates
-        self.network = network.fit(reference_coordinates)
+        self.network = network
         self.k = k
         self.neighbors_ = self._generate_neighbors()
 
     def synthetic_coordinates(self) -> NDArray:
-        return self.network.network_coordinates()
+        return self.network.network_coordinates(self.reference_coordinates)
 
     def _generate_neighbors(self) -> tuple[NDArray, NDArray]:
         """Find the nearest reference neighbors of the synthetic mesh."""

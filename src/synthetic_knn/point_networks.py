@@ -15,13 +15,8 @@ from numpy.typing import NDArray
 class PointNetwork(ABC):
     """Abstract base class for point networks."""
 
-    def fit(self, reference_coordinates: Sequence | NDArray):
-        """Set the reference coordinates for the network."""
-        self.reference_coordinates = np.array(reference_coordinates)
-        return self
-
     @abstractmethod
-    def network_coordinates(self) -> NDArray:
+    def network_coordinates(self, reference_coordinates: Sequence | NDArray) -> NDArray:
         """Return the point network coordinates as a n-D array."""
         ...
 
@@ -29,8 +24,8 @@ class PointNetwork(ABC):
 class ReferenceNetwork(PointNetwork):
     """Point network that uses the reference coordinates as the network coordinates."""
 
-    def network_coordinates(self) -> NDArray:
-        return self.reference_coordinates
+    def network_coordinates(self, reference_coordinates: Sequence | NDArray) -> NDArray:
+        return reference_coordinates
 
 
 class FuzzedNetwork(PointNetwork):
@@ -45,14 +40,12 @@ class FuzzedNetwork(PointNetwork):
         self.minimum_distance = minimum_distance
         self.maximum_distance = maximum_distance
 
-    def _fuzz_points(self) -> NDArray:
+    def _fuzz_points(self, coordinates: NDArray) -> NDArray:
         """Generate fuzzed points in n-D space by adding a random offset
         to the original points."""
-        coords = self.reference_coordinates
-
         # Generate a random direction vector
         rng = np.random.default_rng()
-        direction = rng.standard_normal(coords.shape)
+        direction = rng.standard_normal(coordinates.shape)
 
         # Normalize the direction vector
         direction /= np.linalg.norm(direction, axis=1, keepdims=True)
@@ -60,16 +53,16 @@ class FuzzedNetwork(PointNetwork):
         # Scale the direction vector by a random distance between
         # min_distance and max_distance
         distance = rng.uniform(
-            self.minimum_distance, self.maximum_distance, (len(coords), 1)
+            self.minimum_distance, self.maximum_distance, (len(coordinates), 1)
         )
         offset = direction * distance
 
         # Add the offset to the original points
-        return coords + offset
+        return coordinates + offset
 
-    def network_coordinates(self) -> NDArray:
+    def network_coordinates(self, reference_coordinates: Sequence | NDArray) -> NDArray:
         """Generate a network of fuzzed points in n-D space."""
-        return self._fuzz_points()
+        return self._fuzz_points(np.asarray(reference_coordinates))
 
 
 class Mesh(PointNetwork):
@@ -79,7 +72,7 @@ class Mesh(PointNetwork):
         self.n_bins = n_bins
 
     @abstractmethod
-    def generate_bin_edges(self):
+    def generate_bin_edges(self, reference_coordinates: NDArray) -> NDArray:
         """Return the edges of the bins."""
         ...
 
@@ -91,23 +84,23 @@ class Mesh(PointNetwork):
             list(map(np.ravel, np.meshgrid(*midpoint_coordinates, indexing="xy")))
         )
 
-    def network_coordinates(self) -> NDArray:
-        bin_edges = self.generate_bin_edges()
+    def network_coordinates(self, reference_coordinates: Sequence | NDArray) -> NDArray:
+        bin_edges = self.generate_bin_edges(np.asarray(reference_coordinates))
         return self.generate_bin_midpoints_mesh(bin_edges)
 
 
 class QuantileMesh(Mesh):
     """Mesh point network with quantile bin spacing in each dimension."""
 
-    def generate_bin_edges(self) -> NDArray:
+    def generate_bin_edges(self, reference_coordinates: NDArray) -> NDArray:
         q = np.linspace(0.0, 1.0, self.n_bins + 1)
-        return np.quantile(self.reference_coordinates, q, axis=0).T
+        return np.quantile(reference_coordinates, q, axis=0).T
 
 
 class EqualIntervalMesh(Mesh):
     """Mesh point network with equal-interval bin spacing in each dimension."""
 
-    def generate_bin_edges(self) -> NDArray:
-        min_vals = np.min(self.reference_coordinates, axis=0)
-        max_vals = np.max(self.reference_coordinates, axis=0)
+    def generate_bin_edges(self, reference_coordinates: NDArray) -> NDArray:
+        min_vals = np.min(reference_coordinates, axis=0)
+        max_vals = np.max(reference_coordinates, axis=0)
         return np.linspace(min_vals, max_vals, num=self.n_bins + 1).T
