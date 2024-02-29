@@ -64,6 +64,22 @@ def test_mesh_generation(ndarrays_regression, mesh_network, n_bins, n_dimensions
 
 
 @pytest.mark.parametrize(
+    "mesh_network",
+    [QuantileMesh, EqualIntervalMesh],
+    ids=["quantile", "equal_interval"],
+)
+def test_mesh_raises_too_many_points(mesh_network):
+    """Test that the mesh network raises a ValueError when the number of points
+    exceeds limit (currently set to 1e6)."""
+    n_features = 10
+    n_bins = 5
+    rng = np.random.default_rng(42)
+    reference_coordinates = rng.normal(size=(100, n_features))
+    with pytest.raises(ValueError, match="exceeds 1e6"):
+        mesh_network(n_bins=n_bins).network_coordinates(reference_coordinates)
+
+
+@pytest.mark.parametrize(
     "reference_coordinates_type",
     [np.array, list, tuple],
     ids=["np.array", "list", "tuple"],

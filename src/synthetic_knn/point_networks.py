@@ -61,7 +61,6 @@ class FuzzedNetwork(PointNetwork):
         return coordinates + offset
 
     def network_coordinates(self, reference_coordinates: Sequence | NDArray) -> NDArray:
-        """Generate a network of fuzzed points in n-D space."""
         return self._fuzz_points(np.asarray(reference_coordinates))
 
 
@@ -85,6 +84,15 @@ class Mesh(PointNetwork):
         )
 
     def network_coordinates(self, reference_coordinates: Sequence | NDArray) -> NDArray:
+        reference_coordinates = np.asarray(reference_coordinates)
+        if self.n_bins ** reference_coordinates.shape[1] > 1e6:
+            raise ValueError(
+                "The number of mesh points is set to "
+                f"{self.n_bins} ** {reference_coordinates.shape[1]} "
+                "and exceeds 1e6. Please reduce the number of bins or "
+                "the number of features (components) in the reference "
+                "coordinates."
+            )
         bin_edges = self.generate_bin_edges(np.asarray(reference_coordinates))
         return self.generate_bin_midpoints_mesh(bin_edges)
 
