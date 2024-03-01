@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from sklearn.neighbors import NearestNeighbors
@@ -16,8 +17,24 @@ class SyntheticPlots:
         self.k = k
         self.neighbors_ = self._generate_neighbors()
 
-    def synthetic_coordinates(self) -> NDArray:
-        return self.network.network_coordinates(self.reference_coordinates)
+    @staticmethod
+    def _create_column_names(n: int, prefix: str) -> list[str]:
+        return [f"{prefix}{i+1}" for i in range(n)]
+
+    def _create_dataframe(self, arr: NDArray, prefix: str = "NN") -> pd.DataFrame:
+        df = pd.DataFrame(
+            arr,
+            columns=self._create_column_names(arr.shape[1], prefix),
+            index=np.arange(1, arr.shape[0] + 1),
+        )
+        df.index.name = "SYNTHETIC_PLOT_ID"
+        return df
+
+    def synthetic_coordinates(self, as_frame: bool = False) -> NDArray:
+        coordinates = self.network.network_coordinates(self.reference_coordinates)
+        if as_frame:
+            return self._create_dataframe(coordinates, prefix="CCA")
+        return coordinates
 
     def _generate_neighbors(self) -> tuple[NDArray, NDArray]:
         """Find the nearest reference neighbors of the synthetic mesh."""
@@ -25,39 +42,15 @@ class SyntheticPlots:
         nn_finder.fit(self.reference_coordinates)
         return nn_finder.kneighbors(self.synthetic_coordinates(), n_neighbors=self.k)
 
-    def distances(self) -> NDArray:
-        return self.neighbors_[0]
+    def distances(self, as_frame: bool = False) -> NDArray:
+        distances = self.neighbors_[0]
+        if as_frame:
+            return self._create_dataframe(distances)
+        return distances
 
-    def neighbors(self, *, id_arr: NDArray = None) -> NDArray:
+    def neighbors(self, *, id_arr: NDArray = None, as_frame: bool = False) -> NDArray:
         nn_idx = self.neighbors_[1]
-        return id_arr[nn_idx] if id_arr is not None else nn_idx
-
-    def write_synthetic_coordinates(
-        self, *, coordinates_fn: str = "synthetic_coordinates.csv"
-    ) -> None:
-        c = self.synthetic_coordinates()
-        cols = [f"CCA{i+1}" for i in range(c.shape[1])]
-        idx = [i + 1 for i in range(c.shape[0])]
-        df = pd.DataFrame(c, columns=cols, index=idx)
-        df.index.name = "SYNTHETIC_PLOT_ID"
-        df.to_csv(coordinates_fn, float_format="%.6f")
-
-    def write_neighbors(
-        self,
-        *,
-        neighbors_fn: str = "neighbors.csv",
-        distances_fn: str = "distances.csv",
-        id_arr: NDArray = None,
-    ) -> None:
-        distances = self.distances()
-        neighbors = self.neighbors(id_arr=id_arr)
-        cols = [f"NN{i+1}" for i in range(neighbors.shape[1])]
-        idx = [i + 1 for i in range(neighbors.shape[0])]
-
-        def _write_csv(arr: NDArray, fn: str, float_format: str | None = None) -> None:
-            df = pd.DataFrame(arr, columns=cols, index=idx)
-            df.index.name = "SYNTHETIC_PLOT_ID"
-            df.to_csv(fn, float_format=float_format)
-
-        _write_csv(neighbors, neighbors_fn)
-        _write_csv(distances, distances_fn, float_format="%.6f")
+        neighbors = id_arr[nn_idx] if id_arr is not None else nn_idx
+        if as_frame:
+            return self._create_dataframe(neighbors)
+        return neighbors
