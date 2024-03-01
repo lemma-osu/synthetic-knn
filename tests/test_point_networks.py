@@ -29,20 +29,12 @@ def test_fuzzed_network():
     network = FuzzedNetwork(
         minimum_distance=minimum_distance, maximum_distance=maximum_distance
     )
-    assert np.all(
-        np.linalg.norm(
-            network.network_coordinates(reference_coordinates) - reference_coordinates,
-            axis=1,
-        )
-        >= minimum_distance
+    distances = np.linalg.norm(
+        network.network_coordinates(reference_coordinates) - reference_coordinates,
+        axis=1,
     )
-    assert np.all(
-        np.linalg.norm(
-            network.network_coordinates(reference_coordinates) - reference_coordinates,
-            axis=1,
-        )
-        <= maximum_distance
-    )
+    assert np.all(distances >= minimum_distance)
+    assert np.all(distances <= maximum_distance)
 
 
 @pytest.mark.parametrize(
