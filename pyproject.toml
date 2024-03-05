@@ -10,11 +10,7 @@ readme = "README.md"
 license = ""
 requires-python = ">=3.9"
 authors = [{ name = "Matt Gregory", email = "matt.gregory@oregonstate.edu" }]
-dependencies = [
-    "numpy",
-    "pandas",
-    "scikit-learn-knn-regression @ git+https://github.com/lemma-osu/scikit-learn-knn-regression",
-]
+dependencies = ["numpy", "pandas"]
 
 [project.urls]
 Homepage = "https://github.com/lemma-osu/synthetic-knn"
@@ -33,7 +29,11 @@ include = ["/src"]
 allow-direct-references = true
 
 [tool.hatch.envs.default]
-dependencies = ["ipykernel", "pre-commit"]
+dependencies = [
+    "ipykernel",
+    "pre-commit",
+    "scikit-learn-knn-regression @ git+https://github.com/lemma-osu/scikit-learn-knn-regression",
+]
 
 [tool.hatch.envs.test]
 dependencies = ["pytest", "pytest-cov", "pytest-regressions"]

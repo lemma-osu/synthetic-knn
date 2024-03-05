@@ -30,10 +30,12 @@ class SyntheticPlots:
         df.index.name = "SYNTHETIC_PLOT_ID"
         return df
 
-    def synthetic_coordinates(self, as_frame: bool = False) -> NDArray:
+    def synthetic_coordinates(
+        self, as_frame: bool = False, prefix: str = "AXIS"
+    ) -> NDArray:
         coordinates = self.network.network_coordinates(self.reference_coordinates)
         if as_frame:
-            return self._create_dataframe(coordinates, prefix="CCA")
+            return self._create_dataframe(coordinates, prefix=prefix)
         return coordinates
 
     def _generate_neighbors(self) -> tuple[NDArray, NDArray]:
